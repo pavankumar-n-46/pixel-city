@@ -12,10 +12,19 @@ import CoreLocation
 
 class MapVC: UIViewController,UIGestureRecognizerDelegate{
 
+    //outlets
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var pullUpView: UIView!
+    @IBOutlet weak var pullUpViewHeightConstraint: NSLayoutConstraint!
+    
+    //vars
     var locationManager = CLLocationManager()
     let authorizationStatus = CLLocationManager.authorizationStatus()
     let regionRadius: Double = 1000
+    
+    var spinner: UIActivityIndicatorView?
+    var progressLbl: UILabel?
+    let screenSize = UIScreen.main.bounds
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,6 +39,36 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         doubleTap.numberOfTapsRequired = 2
         doubleTap.delegate = self
         mapView.addGestureRecognizer(doubleTap)
+    }
+    
+    func addSwpie(){
+        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(animateViewDown))
+        swipeDown.direction = .down
+        pullUpView.addGestureRecognizer(swipeDown)
+    }
+    
+    func animateViewUp(){
+        addSpinner()
+        pullUpViewHeightConstraint.constant = 300
+        UIView.animate(withDuration: 0.5) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func addSpinner(){
+        spinner = UIActivityIndicatorView()
+        spinner?.center = CGPoint(x: (screenSize.width/2)-((spinner?.frame.width)!/2), y: 150 )
+        spinner?.style = .whiteLarge
+        spinner?.color = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        spinner?.startAnimating()
+        pullUpView.addSubview(spinner!)
+    }
+    
+    @objc func animateViewDown(){
+        pullUpViewHeightConstraint.constant = 1
+        UIView.animate(withDuration: 0.5) {
+            self.view.layoutIfNeeded()
+        }
     }
     
     @IBAction func centerMapBtnWasPressed(_ sender: Any) {
@@ -71,6 +110,10 @@ extension MapVC: MKMapViewDelegate{
         //center the annotiation point on the map screen.
         let coordinateRegion = MKCoordinateRegion(center: touchPointCoordinates, latitudinalMeters: regionRadius*2.0, longitudinalMeters: regionRadius*2.0)
         mapView.setRegion(coordinateRegion, animated: true)
+        //bring up the hidden view
+        animateViewUp()
+        //brings down the hidden view
+        addSwpie()
     }
     
     func removePin(){
