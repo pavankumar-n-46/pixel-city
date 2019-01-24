@@ -30,6 +30,7 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     let flowLayout = UICollectionViewFlowLayout()
     var collectionView : UICollectionView?
     var imageUrlArray = [String]()
+    var imageArray = [UIImage]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -82,7 +83,6 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         progressLbl?.font = UIFont(name: "Avenir Next", size: 18)
         progressLbl?.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         progressLbl?.textAlignment = .center
-        progressLbl?.text =  "12/40 images loaded"
         collectionView?.addSubview(progressLbl!)
         
     }
@@ -106,6 +106,8 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     }
     
 }
+
+
 
 extension MapVC: MKMapViewDelegate{
     
@@ -141,8 +143,17 @@ extension MapVC: MKMapViewDelegate{
         let coordinateRegion = MKCoordinateRegion(center: touchPointCoordinates, latitudinalMeters: regionRadius*2.0, longitudinalMeters: regionRadius*2.0)
         mapView.setRegion(coordinateRegion, animated: true)
         //call the requestURL's api
-        retrieveUrls(forAnnotation: annotiation) { (true) in
-            
+        retrieveUrls(forAnnotation: annotiation) { (finished) in
+            if finished{
+                self.retrieveImages(handler: { (finished) in
+                    if finished{
+                        self.spinner?.stopAnimating()
+                        self.spinner?.isHidden = true
+                        self.progressLbl?.isHidden = true
+                        
+                    }
+                })
+            }
         }
         //bring up the hidden view
         animateViewUp()
@@ -171,10 +182,27 @@ extension MapVC: MKMapViewDelegate{
                 self.imageUrlArray.append(url)
             }
             print(self.imageUrlArray)
+            handler(true)
+        }
+    }
+    
+    func retrieveImages(handler:@escaping (Bool)->Void){
+        imageArray.removeAll()
+        for url in imageUrlArray{
+            request(url).responseImage { (response) in
+                guard let image = response.result.value else { return }
+                self.imageArray.append(image)
+                self.progressLbl?.text = "\(self.imageArray.count)/40 Images Loaded"
+                if self.imageArray.count == self.imageUrlArray.count{
+                    handler(true)
+                }
+            }
         }
     }
     
 }
+
+
 
 extension MapVC: CLLocationManagerDelegate{
     func configureLocationServices(){
@@ -189,6 +217,8 @@ extension MapVC: CLLocationManagerDelegate{
         centerMapOnUserLocation()
     }
 }
+
+
 
 
 extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
