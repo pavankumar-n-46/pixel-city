@@ -25,6 +25,8 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     var spinner: UIActivityIndicatorView?
     var progressLbl: UILabel?
     let screenSize = UIScreen.main.bounds
+    let flowLayout = UICollectionViewFlowLayout()
+    var collectionView : UICollectionView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,6 +34,15 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         locationManager.delegate = self
         configureLocationServices()
         addDoubleTap()
+        
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: flowLayout)
+        collectionView?.register(PhotoCell.self, forCellWithReuseIdentifier: "photoCell")
+        collectionView?.delegate = self
+        collectionView?.dataSource = self
+        collectionView?.backgroundColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
+        
+        pullUpView.addSubview(collectionView!)
+        
     }
     
     func addDoubleTap(){
@@ -48,7 +59,6 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     }
     
     func animateViewUp(){
-        addSpinner()
         pullUpViewHeightConstraint.constant = 300
         UIView.animate(withDuration: 0.5) {
             self.view.layoutIfNeeded()
@@ -57,14 +67,30 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     
     func addSpinner(){
         spinner = UIActivityIndicatorView()
-        spinner?.center = CGPoint(x: (screenSize.width/2)-((spinner?.frame.width)!/2), y: 150 )
+        spinner?.center = CGPoint(x: (screenSize.width/2)-((spinner?.frame.width)!/2), y: 130 )
         spinner?.style = .whiteLarge
         spinner?.color = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         spinner?.startAnimating()
-        pullUpView.addSubview(spinner!)
+        collectionView?.addSubview(spinner!)
+    }
+    
+    func addProgressLbl(){
+        progressLbl = UILabel()
+        progressLbl?.frame = CGRect(x: (screenSize.width/2)-120, y: 150, width: 240, height: 40)
+        progressLbl?.font = UIFont(name: "Avenir Next", size: 18)
+        progressLbl?.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        progressLbl?.textAlignment = .center
+        progressLbl?.text =  "12/40 images loaded"
+        collectionView?.addSubview(progressLbl!)
+        
+    }
+    
+    func removeSpinner(){
+        spinner?.removeFromSuperview()
     }
     
     @objc func animateViewDown(){
+        removeSpinner()
         pullUpViewHeightConstraint.constant = 1
         UIView.animate(withDuration: 0.5) {
             self.view.layoutIfNeeded()
@@ -101,6 +127,8 @@ extension MapVC: MKMapViewDelegate{
     @objc func dropPin(sender: UITapGestureRecognizer){
         //remove all annotations
         removePin()
+        //remove spinner
+        removeSpinner()
         //convert the touch coordinates of the screen to GPS coordinates from the mapView
         let touchPoint = sender.location(in: mapView)
         let touchPointCoordinates = mapView.convert(touchPoint, toCoordinateFrom: mapView)
@@ -114,6 +142,10 @@ extension MapVC: MKMapViewDelegate{
         animateViewUp()
         //brings down the hidden view
         addSwpie()
+        //addSpinner
+        addSpinner()
+        //add progress label
+        addProgressLbl()
     }
     
     func removePin(){
@@ -136,4 +168,23 @@ extension MapVC: CLLocationManagerDelegate{
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         centerMapOnUserLocation()
     }
+}
+
+
+extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        //number of items in array
+        return 4
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell
+        return cell!
+    }
+    
+    
 }
