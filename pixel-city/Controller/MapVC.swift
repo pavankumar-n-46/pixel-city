@@ -93,8 +93,10 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     
     @objc func animateViewDown(){
         removeSpinner()
+        imageArray.removeAll()
         pullUpViewHeightConstraint.constant = 1
         UIView.animate(withDuration: 0.5) {
+            self.collectionView?.reloadData()
             self.view.layoutIfNeeded()
         }
     }
