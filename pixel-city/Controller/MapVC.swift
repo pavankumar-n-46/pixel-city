@@ -135,6 +135,8 @@ extension MapVC: MKMapViewDelegate{
         //put the annotiation on the map screen.
         let annotiation = DroppablePin(coordinate: touchPointCoordinates, identifier: "dropped_pin")
         mapView.addAnnotation(annotiation)
+        //call flickr api
+      
         //center the annotiation point on the map screen.
         let coordinateRegion = MKCoordinateRegion(center: touchPointCoordinates, latitudinalMeters: regionRadius*2.0, longitudinalMeters: regionRadius*2.0)
         mapView.setRegion(coordinateRegion, animated: true)
@@ -183,7 +185,7 @@ extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell
-        return cell!
+        return cell! 
     }
     
     
