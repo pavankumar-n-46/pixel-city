@@ -81,7 +81,7 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         progressLbl = UILabel()
         progressLbl?.frame = CGRect(x: (screenSize.width/2)-120, y: 150, width: 240, height: 40)
         progressLbl?.font = UIFont(name: "Avenir Next", size: 18)
-        progressLbl?.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        progressLbl?.textColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
         progressLbl?.textAlignment = .center
         collectionView?.addSubview(progressLbl!)
         
@@ -133,6 +133,12 @@ extension MapVC: MKMapViewDelegate{
         removePin()
         //remove spinner
         removeSpinner()
+        //remove image URL's
+        imageUrlArray.removeAll()
+        //remove images
+        imageArray.removeAll()
+        //reload collection view
+        collectionView?.reloadData()
         //convert the touch coordinates of the screen to GPS coordinates from the mapView
         let touchPoint = sender.location(in: mapView)
         let touchPointCoordinates = mapView.convert(touchPoint, toCoordinateFrom: mapView)
@@ -150,7 +156,7 @@ extension MapVC: MKMapViewDelegate{
                         self.spinner?.stopAnimating()
                         self.spinner?.isHidden = true
                         self.progressLbl?.isHidden = true
-                        
+                        self.collectionView?.reloadData()
                     }
                 })
             }
@@ -172,8 +178,7 @@ extension MapVC: MKMapViewDelegate{
     }
     
     func retrieveUrls(forAnnotation annotation: DroppablePin, handler: @escaping (_ status:Bool)->()){
-        imageUrlArray.removeAll()
-        request(flickrUrl(forApi: key, withAnnotation: annotation, andNumberOfPhotos: 40)).responseJSON{ (response) in
+        request(flickrUrl(forApi: key, withAnnotation: annotation, andNumberOfPhotos: NUMBER_OF_IMAGES)).responseJSON{ (response) in
             guard let json = response.result.value as? Dictionary<String,AnyObject> else {return}
             let photosDict = json["photos"] as! Dictionary<String,AnyObject>
             let photosDictArray = photosDict["photo"] as! [Dictionary<String,AnyObject>]
@@ -187,22 +192,18 @@ extension MapVC: MKMapViewDelegate{
     }
     
     func retrieveImages(handler:@escaping (Bool)->Void){
-        imageArray.removeAll()
         for url in imageUrlArray{
             request(url).responseImage { (response) in
                 guard let image = response.result.value else { return }
                 self.imageArray.append(image)
-                self.progressLbl?.text = "\(self.imageArray.count)/40 Images Loaded"
+                self.progressLbl?.text = "\(self.imageArray.count)/\(self.imageUrlArray.count) Images Loaded"
                 if self.imageArray.count == self.imageUrlArray.count{
                     handler(true)
                 }
             }
         }
     }
-    
 }
-
-
 
 extension MapVC: CLLocationManagerDelegate{
     func configureLocationServices(){
@@ -218,9 +219,6 @@ extension MapVC: CLLocationManagerDelegate{
     }
 }
 
-
-
-
 extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -228,13 +226,13 @@ extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         //number of items in array
-        return 4
+        return imageArray.count
     }
-    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell
-        return cell! 
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell else { return UICollectionViewCell()}
+        let imageFromIndex = imageArray[indexPath.row]
+        let imageView = UIImageView(image: imageFromIndex)
+        cell.addSubview(imageView)
+        return cell
     }
-    
-    
 }
