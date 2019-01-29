@@ -51,7 +51,7 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
     
     func addDoubleTap(){
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(dropPin(sender:)))
-        doubleTap.numberOfTapsRequired = 2
+        doubleTap.numberOfTapsRequired = 3
         doubleTap.delegate = self
         mapView.addGestureRecognizer(doubleTap)
     }
@@ -73,7 +73,7 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         spinner = UIActivityIndicatorView()
         spinner?.center = CGPoint(x: (screenSize.width/2)-((spinner?.frame.width)!/2), y: 130 )
         spinner?.style = .whiteLarge
-        spinner?.color = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        spinner?.color = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
         spinner?.startAnimating()
         collectionView?.addSubview(spinner!)
     }
@@ -85,7 +85,6 @@ class MapVC: UIViewController,UIGestureRecognizerDelegate{
         progressLbl?.textColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
         progressLbl?.textAlignment = .center
         collectionView?.addSubview(progressLbl!)
-        
     }
     
     func removeSpinner(){
@@ -200,7 +199,7 @@ extension MapVC: MKMapViewDelegate{
                 guard let image = response.result.value else { return }
                 self.imageArray.append(image)
                 self.progressLbl?.text = "\(self.imageArray.count)/\(self.imageUrlArray.count) Images Loaded"
-                if self.imageArray.count == self.imageUrlArray.count{
+                if self.imageArray.count >= (self.imageUrlArray.count - 1){
                     handler(true)
                 }
             }
@@ -238,7 +237,7 @@ extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell else { return UICollectionViewCell()}
         let imageFromIndex = imageArray[indexPath.row]
         let imageView = UIImageView(image: imageFromIndex)
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .center
         cell.addSubview(imageView)
         return cell
     }
@@ -253,6 +252,7 @@ extension MapVC: UICollectionViewDelegate,UICollectionViewDataSource{
 }
 
 extension MapVC: UIViewControllerPreviewingDelegate{
+    
     func previewingContext(_ previewingContext: UIViewControllerPreviewing, viewControllerForLocation location: CGPoint) -> UIViewController? {
         guard let indexPath = collectionView?.indexPathForItem(at: location), let cell = collectionView?.cellForItem(at: indexPath) else { return nil}
         guard let popVC = storyboard?.instantiateViewController(withIdentifier: "PopVC") as? PopVC else { return nil}
